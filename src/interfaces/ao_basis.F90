@@ -96,8 +96,6 @@
             coeff = 0.D0
             forall (i=1:ncont) coeff(nprim*(i-1)+i) = 1.D0
           end if
-          ! This normalization routines is provided by gen1int, can be deactivated if this library is not installed
-          call norm_contr_cgto(angular, nprim, exponent, ncont, coeff)
 
           ! copy all of this into the gtos array
           gtos(nshells+1)%orb_momentum = angular

@@ -198,10 +198,15 @@ module compute_integrals
      real(8) :: ci, cj, ck, cl, fijkl
      real(8) :: ei, ej, ek, el
      real(8) :: xi, yi, zi, xj, yj, zj, xk, yk, zk, xl, yl, zl
-     integer :: li, lj, lk, ll
-     real(8) :: gout(21*21*21*21)
+     integer :: li, lj, lk, ll, ni, nj, nk, nl
+     real(8), allocatable :: gout(:)
 
-     ! copy and restructure the input data to fit interest
+     ! copy and restructure the data to fit interest
+     ni = size(ints,1)
+     nj = size(ints,1)
+     nk = size(ints,1)
+     nl = size(ints,1)
+     allocate (gout(ni*nj*nk*nl))
      fijkl = 1.0D0
      ci = 1.D0
      cj = 1.D0
@@ -232,8 +237,9 @@ module compute_integrals
                        ll,el,xl,yl,zl,cl,&
                        li,ei,xi,yi,zi,ci,&
                        lj,ej,xj,yj,zj,cj )
-     ! copy integrals into the 4-dimensional aoutput array
-     ints = reshape(gout,(/li*(li+1)/2,lj*(lj+1)/2,lk*(lk+1)/2,ll*(ll+1)/2/))
+     ! copy integrals into the 4-dimensional output array
+     ints = reshape(gout(1:ni*nj*nk*nl),(/ni,nj,nk,nl/))
+     deallocate(gout)
 
    end subroutine
 
