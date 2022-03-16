@@ -1,0 +1,4 @@
+#define MIN_ARG_TAB 0.0_REALK
+#define MAX_ARG_TAB 12.0_REALK
+#define NSTEPS_TAB 120
+#define INTERV_TAB 0.1_REALK

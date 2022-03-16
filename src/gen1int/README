@@ -1,0 +1,50 @@
+*  gen1int: compute one-electron integrals using rotational London atomic-orbitals
+*  Copyright 2009-2012 Bin Gao, and Andreas Thorvaldsen
+*
+*  gen1int is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Lesser General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  gen1int is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*  GNU Lesser General Public License for more details.
+*  
+*  You should have received a copy of the GNU Lesser General Public License
+*  along with gen1int. If not, see <http://www.gnu.org/licenses/>.
+
+1. A brief description of the project
+
+   Gen1Int is a Fortran 90 library (with Python interface) to evaluate the
+   derivatives of one-electron integrals with respect to the geometry perturbation,
+   external electric and magnetic fields, and total rotational angular momentum
+   at zero fields with contracted rotational London atomic orbitals (LAO).
+
+   Please refer to doc/manual.pdf for more details.
+   Please refer to RULES if you would like to contribute.
+
+2. See for the files below the project page of gen1int on github
+
+3. Notes on the developer's build environment and potential portability problems
+
+4. Important files and subdirectories
+
+   Files in doc directory
+   * manual.tex           : manual, LaTeX file
+   * refs.bib             : references, BibTeX file
+
+   Files in tools directory
+   * NumDerivativ.py      : Python file to compute the number of geometric
+                            derivative integrals of given number of (1) atoms,
+                            (2) operators, and (3) total order of geometric derivatives
+
+   Files in src directory
+   * 
+
+5. Please see chapter ``Installation'' in doc/manual.pdf for installation instructions
+
+6. Please see AUTHORS for the maintainers list
+
+7. Please see NEWS for recent project news
+
