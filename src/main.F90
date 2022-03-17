@@ -60,19 +60,19 @@ program HartreeFock
      allocate (D(n_AO,n_AO))
      do lambda = 1, n_ao
         do kappa = 1, n_ao
-           D(kappa,lambda) = sum(C(kappa,1:n_occ)*C(lambda,1:n_occ))
+           D(kappa,lambda) = 2.D0 * sum(C(kappa,1:n_occ)*C(lambda,1:n_occ))
        end do
      end do
 
      ! Compute the Hartree-Fock energy (this should be modified, see the notes)
-     E_HF = 2.D0 * sum(F*D)
+     E_HF = sum(F*D)
      allocate (ao_integrals(n_AO,n_AO,n_AO,n_AO))
      ! Compute all 2-electron integrals
      call generate_2int (ao_basis,ao_integrals)
      do lambda = 1, n_ao
         do kappa = 1, n_ao
-           E_HF = E_HF + 2.D0 *  D(kappa,lambda) * sum(D*ao_integrals(:,:,kappa,lambda))
-           E_HF = E_HF - 1.D0 *  D(kappa,lambda) * sum(D*ao_integrals(:,lambda,kappa,:))
+           E_HF = E_HF + 0.5D0 * D(kappa,lambda) * sum(D*ao_integrals(:,:,kappa,lambda))
+           E_HF = E_HF - 0.25D0 * D(kappa,lambda) * sum(D*ao_integrals(:,lambda,kappa,:))
        end do
      end do
    
