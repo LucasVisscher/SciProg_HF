@@ -1,0 +1,232 @@
+\documentclass[11pt, bibliography=totoc]{scrartcl}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc} 
+\usepackage{csquotes}
+
+\DeclareUnicodeCharacter{2010}{-}
+
+%%%%%%  Packages
+
+\usepackage{amsmath,amssymb,amsthm, amsfonts, mathtools} 
+\usepackage{physics}
+%\usepackage{bbm}
+\usepackage{bm}
+\usepackage{tensor, braket}
+\usepackage{eqnarray}
+\usepackage{array}
+\usepackage{enumerate}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{wrapfig, caption, float, subcaption, epstopdf, setspace}
+\usepackage{hyperref}
+\usepackage[section]{placeins}
+\usepackage{multicol, multirow}
+\usepackage{tikz,tkz-euclide}
+\usepackage[compat=1.1.0]{tikz-feynman}
+\usetikzlibrary{shapes.geometric,arrows,arrows.meta, calc, positioning, automata, shadows, backgrounds,
+                decorations.markings,decorations.pathreplacing}
+\usepackage{pagecolor}\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{xcolor}
+\usepackage{algpseudocode}
+
+\iffalse
+
+%%%%%% Bibliography %%%%%
+
+\usepackage[
+  backend=bibtex,
+  style=nature,
+  sorting=none,
+  doi=false,
+  isbn=false,
+  url=false
+ ]{biblatex}
+\addbibresource{phd}
+\setcounter{tocdepth}{3} 
+
+\fi
+
+%%%% Definitions
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{mydef}{Definition}[section]
+\newtheorem{proposition}{Proposition}[section]
+
+%%%%% Preferences
+
+%\numberwithin{equation}{section}
+\renewcommand{\thesection}{\Roman{section}} 
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\p}[1]{\phi_{#1}(\bm{r})}
+\newcommand{\pp}[1]{\phi_{#1}(\bm{r}')}
+\newcommand{\cc}[1]{\chi_{#1}(\bm{r})}
+\newcommand{\ccc}[1]{\chi_{#1}(\bm{r}')}
+\newcommand{\ps}[1]{\phi_{#1}^{\ast}(\bm{r})}
+\newcommand{\pps}[1]{\phi_{#1}^{\ast}(\bm{r}')}
+\newcommand{\ccs}[1]{\chi_{#1}^{\ast}(\bm{r})}
+\newcommand{\cccs}[1]{\chi_{#1}^{\ast}(\bm{r}')}
+\newcommand{\s}[1]{\sum_{#1}}
+\newcommand{\ta}[2]{t_{#1}^{#2}}
+\newcommand{\tp}[2]{t_{#1}^{#2}\Phi_{#1}^{#2}}
+\newcommand{\create}[1]{\hat{a}^{\dagger}_{#1}}
+\newcommand{\anihilate}[1]{\hat{a}_{#1}}
+\newcommand{\eri}[2]{\braket{#1||#2}}
+\newcommand{\eris}[2]{\braket{#1|#2}}
+\newcommand{\multi}[2]{\overset{#1}{#2}}
+\newcommand{\cmark}{\color{green}\ding{51}}%
+\newcommand{\xmark}{\color{red}\ding{55}}%
+
+
+%%%%% Shortcuts
+
+\def\br{\ensuremath\bm{r}}
+
+\def\i{\ensuremath{\int d \br }}
+\def\ii{\ensuremath{\int d \br ' }}
+\def\sa{\ensuremath{^{\ast}}}
+
+%%%%% Document
+
+\title{Make your own Hartree-Fock program}
+\author{Lucas Visscher, Vrije Universiteit Amsterdam}
+
+\begin{document}
+
+\maketitle
+In this project you will build your own Hartree-Fock program with the aid of libraries to compute integrals over Gaussian basis functions and to solve matrix eigenvalue problems. \emph{The project requires some background knowledge on quantum chemistry, }
+
+ \section{Theory}
+In Hartree-Fock theory we minimize the energy of a many-electron system by assuming a single determinant form of the wave function. For derivation
+of the equations and further background we refer to the bachelor course Computational Chemistry and the master course Understanding Quantum Chemistry. We will below just summarize the working equations that are to be programmed in the project. We will use the linear combination of atomic orbitals approach (LCAO) in which a molecular orbital $\psi_p$ is written as 
+
+\begin{equation} \label{lcao}
+\psi_p(\mathbf{r})=\sum_{\kappa=1}^{N_{AO}} C_{\kappa p}\chi_\kappa(\mathbf{r})
+\end{equation}
+
+with $N_{AO}$ the number of atomic basis functions $\chi_\kappa(\mathbf{r})$. As an example you may consider the water molecule in a minimal basis, we then have 7 basis functions: the $1s, 2s, 2p_x, 2p_y$, and $2p_z$ orbitals on Oxygen plus the two $1s$ functions of the two Hydrogen atoms. As water has 10 electrons, only 5 of the functions will be occupied by each 2 electrons in the Hartree-Fock wave function. More generally we define the number of occupied orbitals as $N_{occ}=N_e/2$ with $N_{e}$ the number of electrons in the molecule. The remaining molecular orbitals (2 in case of water, $N_{virt}=N_{AO}-N_{occ}$ in general) are left unoccupied. Note that we only consider even numbers of electrons, this is the so-called restricted Hartree-Fock method, the simplest and most-used of the family of Hartree-Fock methods. Furthermore we consider only real-valued orbitals so that we need not worry about complex algebra.
+
+We start by defining a density matrix $\mathbf{D}$ that is constructed from the matrix of MO coefficients $\mathbf{C}$ as
+
+\begin{equation} \label{dm}
+D_{\kappa \lambda}=\sum_{i=1}^{N_{occ}} C_{\kappa i}C_{\lambda i}\
+\end{equation}
+With this density matrix we can compute the Fock matrix $\mathbf{F}$ as
+
+\begin{equation} \label{fm}
+F_{\kappa \lambda}=h^{core}_{\kappa \lambda}  + \sum_{\mu=1}^{N_{AO}}\sum_{\nu=1}^{N_{AO}} \left[ 2g_{\kappa \lambda \mu \nu} - g_{\kappa \nu \mu \lambda}\right]D_{\mu \nu}
+\end{equation}
+
+and the Hartree-Fock energy $E^{HF}$ as
+
+\begin{equation} \label{EHF}
+E^{HF}= \sum_{\kappa=1}^{N_{AO}}\sum_{\lambda=1}^{N_{AO}} \left[ h^{core}_{\kappa \lambda}+F_{\kappa \lambda} \right] D_{\kappa \lambda}
+\end{equation}
+
+ if both the set of 1-electron $\mathbf{h}^{core}$ and 2-electron $\mathbf{g}$ 
+ 
+ \begin{equation} \label{g} 
+ g_{\kappa \lambda \mu \nu}=\int \int \chi_\kappa(\mathbf{r}_1) \chi_\lambda(\mathbf{r}_1) \frac{1}{r_{12}}  \chi_\mu(\mathbf{r}_2) \chi_\nu(\mathbf{r}_2) d\mathbf{r}_1 d\mathbf{r}_2
+ \end{equation}
+ 
+ integrals can be computed. If we do not consider frozen cores $\mathbf{h}^{core}$ is simply the matrix representation of the sum of the kinetic energy ($\mathbf{T}$) and the potential energy operators\footnote{Note that we use atomic units in which m, $\hbar$, and $e$ (this is the elementary charge, so nuclei have a charge $Ze$ and electrons have charge $-e$) all have a value of $1$. We incorporate the negative sign of the electron charge in equation \ref{hcore} to be consistent with the definition of the potential matrix in the Gen1int module.}  
+ 
+\begin{equation} \label{hcore}
+h^{core}_{\kappa \lambda}=T_{\kappa \lambda} - V_{\mu \nu}
+\end{equation}
+
+with 
+
+\begin{equation} \label{kinetic}
+T_{\kappa \lambda}= \int \chi_\kappa(\mathbf{r}) \frac{- \nabla^2}{2} \chi_\lambda(\mathbf{r})  d\mathbf{r}
+\end{equation}
+
+and 
+
+\begin{equation} \label{potential}
+V_{\kappa \lambda} =\sum_{A=1}^{N_{atoms}} \int \chi_\kappa(\mathbf{r}) \frac{Ze}{r_A} \chi_\lambda(\mathbf{r})  d\mathbf{r}.
+\end{equation} 
+
+If we allow for a frozen core this matrix should also includes the interaction with a set of predetermined core orbitals. In this project we will use the Gen1int and InteRest libraries that are both open-source and could therefore be combined into one library with a simplified interface. This library is provided as a github repository so that you can clone it and add your own work to that clone. It contain subroutines to compute the matrix elements defined in Eqns. (\ref{kinetic}), (\ref{potential}), (\ref{g}), as well as the overlap (\ref{overlap}), that is also needed. 
+
+\begin{equation} \label{overlap}
+S_{\kappa \lambda}= \int \chi_\kappa(\mathbf{r}) \chi_\lambda(\mathbf{r})  d\mathbf{r}
+\end{equation}
+
+Looking at the equations above you may verify that the only information missing is the matrix with MO-coefficients $\mathbf{C}$. These are determined in an iterative procedure by first initializing the density matrix to zero such that the Fock matrix is just $\mathbf{h}^{core}$. This matrix can be diagonalized and the $N_{occ}$with the lowest energy can then be selected to produce a new density matrix and so on until the Fock matrix and its eigenvalues do not change anymore. A complication is that the problem to be solved is a generalized eigenvalue problem
+
+\begin{equation} \label{fm_diag}
+\mathbf{F}\mathbf{C}=\mathbf{S}\mathbf{C}\mathbf{\epsilon}
+\end{equation}
+
+as the overlap matrix is not diagonal. For this we provide an appropriate solver in a demonstration program that you may use as a starting point for your own work. This demonstration program computes the energy of the BeHe dimer with the two atoms separated by 2 Bohr. As we use a basis with only 3 basis functions we have $N_{occ}= N_{AO}$. In this special case we need not iterate and can directly calculate the final energy once the eigenvalues and eigenvectors of $\mathbf{h}^{core}$ are determined. For this we rewrite equation (\ref{EHF}) as
+
+\begin{equation} \label{EHF_start}
+E^{HF}= 2 \sum_{\kappa=1}^{N_{AO}} \sum_{\lambda=1}^{N_{AO}}  h^{core}_{\kappa \lambda} + \sum_{\kappa=1}^{N_{AO}} \sum_{\lambda=1}^{N_{AO}} \sum_{\mu=1}^{N_{AO}} \sum_{\nu=1}^{N_{AO}} \left[ 2g_{\kappa \lambda \mu \nu} - g_{\kappa \nu \mu \lambda}\right] D_{\mu \nu}
+\end{equation}
+
+
+
+as the Fock matrix construction is not yet implemented in the demonstration program (the matrix F contains just the core Hamiltonian). It will be your task to extend this demonstration program to a real Hartree-Fock program that can calculate more general molecules. To summarize, you need to program the following key steps:
+ 
+\begin{enumerate}
+  \item Construct and solve the eigenvalue problem for the core Hamiltonian
+  \item Calculate the density matrix from the $N_{occ}$ eigenvectors with the lowest energy
+  \item Construct the Fock matrix
+  \item Diagonalize the Fock matrix to obtain $N_{AO}$ eigenvalues $\{\epsilon\}$ and eigenvectors $\{\mathbf{C}\}$
+  \item Check convergence and if not converged repeat step 2-4
+  \item Upon convergence (or if a maximum number of iterations is reached): Calculate $E^{HF}$ with equation (\ref{EHF}).
+\end{enumerate}
+
+We will discuss these steps below in a bit more detail.
+
+\section{Implementation}
+
+\subsection{Set up the core Hamiltonian}
+Here you need to think about the molecule you want to treat and the basis set that you want to use. You can initially keep the simple Be-He dimer and just extend the basis set by adding one $s$ function to each atom. This will already be sufficient to test out the correct functioning of the different steps in your program. In a later stage you should add some input handling, allowing the user of your program to specify the positions and types of the atoms in the molecule to be studied. You could also allow for explicit specification of the basis set for each atom, but this kind of input handling can be time-consuming to write. A reasonable result is achieved by taking for all non-hydrogen elements a basis consisting of 5 s functions with exponents (0.10, 0.35, 1.0, 3.0 and 10.0), 3 p functions (exponents 0.2, 1.0 and 5.0) and one d-function (exponent 1.0). For hydrogen you may take 3 s functions (exponents 0.1, 1.0 and 3.0). This should allow you to do calculations on standard organic molecules, with only the number of atoms and their coordinates being provided via input.
+
+\subsection{Calculate the density matrix}
+Most of the work needed to be able to compute the density is already done by setting up the core Hamiltonian and finding its eigenvectors in step 1. Here you merely need to know the number of electrons and the matrix with eigenvectors to be able to compute the density matrix via equation (\ref{dm}).
+
+\subsection{Construct the Fock matrix}
+The main challenge in this part is to get familiar with the \texttt{generate\_2int} routine that computes the two-electron integrals and how these are returned. Have a look on the values returned in the starting program and make sure you understand how the output array corresponds to the integrals defined in equation (\ref{g}). Then program and test equation (\ref{fm}) and (\ref{EHF}).
+
+\subsection{Diagonalize the Fock matrix}
+For solving the generalized eigenvalue problem you can use the \texttt{solve\_genev} module that is provided in the starting program. 
+
+\subsection{Check convergence and possibly repeat the steps}
+The easiest check is to compare the energy calculated with that of the previous iteration and stop if the difference between these values is below a treshold (10$^{-9}$ Hartree would be a good value for this). More robust is to check whether the density matrix is converged by either taking the vector norm of the difference in density matrices of two iterations 
+
+\begin{equation} \label{Dconv} 
+ \Delta D^{(n)} = \sqrt{\sum_{\mu,\nu} \left| D^{(n)}_{\mu\nu} - D^{(n-1)}_{\mu\nu} \right|^2}
+ \end{equation}
+
+or (and this is used in most implementations) by taking the norm of the commutator (i.e. $\left[ \mathbf{F}, \mathbf{D} \right] = \mathbf{F}\mathbf{D} - \mathbf{D}\mathbf{F}$) of the Fock and density matrices 
+
+\begin{equation} \label{conv} 
+\Delta D^{(n)} =\sqrt{\sum_{\mu,\nu} \left[ \mathbf{F}^{(n)},\mathbf{D}^{(n)} \right]^2_{\mu\nu}}
+ \end{equation}
+
+in which the Fock matrix $\mathbf{F}^{(n)}$ is constructed with the density matrix $\mathbf{D}^{(n)}$.
+For the latter check you only need one density matrix so there are fewer arrays to allocate than with equation (\ref{Dconv} ).
+If the check reveals that you are not converged you should construct a new density matrix from the occupied spinors and continue the SCF iterations.
+
+\subsection{Calculate Energy}
+If you already did this during the iterations you can simply print this once more in a nice form and provide some information about the number of steps needed to converge, convergence reached etc. Don't forget to add also the repulsion between the nuclei, this was not yet calculated in the starting program and is needed to determine (for instance) whether the molecular structure corresponds to a minimum on the potential energy surface.
+
+\section{Possible Extensions}
+The here-described restricted Hartree-Fock formalism is just one of the possible self-consistent field procedures. It could be interesting to also consider unrestricted Hartree-Fock (allows treatment of open shell radicals) and/or use of convergence accelators like the DIIS method.
+
+
+\bibliographystyle{plain}
+
+\bibliography{hf}
+
+
+
+
+\end{document}
+
