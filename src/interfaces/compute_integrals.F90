@@ -203,9 +203,9 @@ module compute_integrals
 
      ! copy and restructure the data to fit interest
      ni = size(ints,1)
-     nj = size(ints,1)
-     nk = size(ints,1)
-     nl = size(ints,1)
+     nj = size(ints,2)
+     nk = size(ints,3)
+     nl = size(ints,4)
      allocate (gout(ni*nj*nk*nl))
      fijkl = 1.0D0
      ci = 1.D0
