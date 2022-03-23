@@ -23,6 +23,7 @@ module compute_integrals
      integer info_prop
      integer num_prim_bra, num_prim_ket, num_contr_bra, num_contr_ket, num_gto_bra, num_gto_ket, num_prop
      real(8), allocatable :: contr_ints(:,:,:,:,:)
+     integer, allocatable :: powers_bra(:,:),powers_ket(:,:)
    
      integer :: ierr, ksh, lsh, koff, loff
      integer :: k, l, kcon, lcon, kang, lang
@@ -56,11 +57,16 @@ module compute_integrals
           num_prim_ket   = size(ao_basis_ket%gtos(lsh)%exponent)
           num_contr_ket  = size(ao_basis_ket%gtos(lsh)%coeff) / num_prim_ket
           num_gto_ket    = n_ang(ao_basis_ket%gtos(lsh)%orb_momentum)
+          allocate (powers_ket(3,num_gto_ket))
+          call set_powers(powers_ket,ao_basis_ket%gtos(lsh)%orb_momentum)
+
           koff = 0
           do ksh = 1, ao_basis_bra%nshells
              num_prim_bra   = size(ao_basis_bra%gtos(ksh)%exponent)
              num_contr_bra  = size(ao_basis_bra%gtos(ksh)%coeff) / num_prim_bra
              num_gto_bra    = n_ang(ao_basis_bra%gtos(ksh)%orb_momentum)
+             allocate (powers_bra(3,num_gto_bra))
+             call set_powers(powers_bra,ao_basis_bra%gtos(ksh)%orb_momentum)
              ! allocate the contracted integrals to be provided by OnePropGetIntegral
              allocate(contr_ints(num_gto_bra,num_contr_bra, &
                       num_gto_ket,num_contr_ket, &
@@ -81,6 +87,7 @@ module compute_integrals
                              contr_coef_ket=ao_basis_ket%gtos(lsh)%coeff,       &
                              spher_gto=.false., one_prop=prop_operator,         &
                              num_gto_bra=num_gto_bra, num_gto_ket=num_gto_ket,  &
+                             powers_bra=powers_bra,powers_ket=powers_ket,       &
                              num_opt=num_prop, contr_ints=contr_ints)
              ! put these integrals at the right place in the AO matrix
              l = 0
@@ -97,9 +104,11 @@ module compute_integrals
               end do
              end do
              ! clean up and go to the next block
+             deallocate(powers_bra)
              deallocate(contr_ints)
              koff = koff + num_contr_bra * num_gto_bra
           end do
+          deallocate(powers_ket)
           loff = loff + num_contr_ket * num_gto_ket
         end do
 
@@ -248,6 +257,25 @@ module compute_integrals
      integer, intent(in) :: angular
      n_ang = (angular+1)*(angular+2)/2
    end function
+
+   subroutine set_powers(powers,orb_momentum)
+     ! define Cartesian Gaussian functions such that the order is the same as used with InteRest
+
+     integer, intent(in)  :: orb_momentum
+     integer, intent(out) :: powers(:,:)
+     integer :: iao,xpow,ypow
+
+     iao = 0
+     do xpow = orb_momentum, 0, -1
+     do ypow = orb_momentum-xpow, 0, -1
+        iao = iao+1
+        powers(1,iao) = xpow
+        powers(2,iao) = ypow
+        powers(3,iao) = orb_momentum-(xpow+ypow)
+      end do
+      end do
+
+   end subroutine
 
 
 end module
