@@ -46,6 +46,7 @@
           allocate (molecule%coord(3,num_atoms_new))
           molecule%charge = charge_new
           molecule%coord  = coord_new
+          molecule%num_atoms = num_atoms_new
 
           ! local allocatable arrays should be destroyed automatically, but just to make sure
           deallocate (charge_new)
