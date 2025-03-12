@@ -124,12 +124,13 @@ module compute_integrals
      type(basis_set_info_t),intent(in) :: ao_basis
      real(8), intent(out)              :: ao_integrals(:,:,:,:)
      real(8), allocatable              :: ints(:,:,:,:)
+     logical                           :: info = .false.
 
      integer :: ish, jsh, ksh, lsh, i, j, k, l, ioff, joff, koff, loff
      integer :: iang, jang, kang, lang, nang_i, nang_j, nang_k, nang_l
      integer :: npri_i, npri_j, npri_k, npri_l
 
-     call interest_initialize()
+     call interest_initialize(info)
 
      loff = 0
      do lsh = 1, ao_basis%nshells
